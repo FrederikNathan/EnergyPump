@@ -66,6 +66,7 @@ Executes EnergyAbsorptionSweep for each parameter set in ParameterList serially 
 * Saves arrays `
 Elist, Blist, Clist, ParameterList
 ` (see below) to data file `Data/FileString_$Run_ID.npz`, where `$Run_ID=YYMMDD_HHMM-SS.MS` gives the time of the execution of `EnergyAbsorptionSweep` in millisecond precsion. Here `ParameterList` was given as input, and 
+
 `[Elist[n],Blist[n],Clist[n]]=FindEnergyAbsorption(ParameterList[n])`.
 
 
