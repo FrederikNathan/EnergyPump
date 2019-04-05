@@ -1,7 +1,9 @@
 # Energy pump simulation
 
-Simulation of energy pump. To launch simulation, first set sweep list with SetSweep.py to generate list of parameters to simulate with. Then run LaunchSweep $Nprocesses to start simulation over the parameter sets specified. Runs with $Nprocesses in parallel. 
-If running on server, first use SetSweep, and then simply run ./StartSweep and follow the instructions to set the number of parallel processes, and assign server. 
+Simulation of energy pump. 
+
+* To launch simulation, first set sweep list with `SetSweep.py` to generate list of parameters to simulate with. Then run `LaunchSweep $Nprocesses` to start simulation over the parameter sets specified. Runs with `$Nprocesses` in parallel. 
+* If running on server, first use SetSweep, and then simply run `./StartSweep` and follow the instructions to set the number of parallel processes, and assign server. 
 
 ##### Dependencies for simulation
 
