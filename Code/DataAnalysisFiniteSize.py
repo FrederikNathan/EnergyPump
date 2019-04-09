@@ -33,15 +33,19 @@ from matplotlib.pyplot import *
 
 #DataDir = "../Data/"
 
-
+omega1=2*pi
 PBC = 0
 
-W=13
-dW=1e-2
+W=2.5*2*pi
+#W=0.5*2*pi
+W=0.9
+dW=1e-3*2*pi
+dOm=1e-5
+
 
 
 def Criterion(L,Nperiods,pbc):
-    return Nperiods>5000 and L>30 and pbc ==0
+    return Nperiods>100 and L>100 and pbc ==0
 
 FileList=os.listdir(D.CleanDataDir)
 Earray=[]
@@ -65,9 +69,9 @@ for File in FileList:
         if pbc==PBC and Criterion(L,Nperiods,pbc):
             Indices = where(abs(WList-W)<dW)[0]
 #            print(Indices)
-            
+
             if len(Indices)>0:
-                
+
                 
                 Earray.append(Elist[Indices])
                 CmeanArray.append(CmeanList[Indices]/L)
@@ -79,32 +83,79 @@ for File in FileList:
                 
                 
 Nseries = len(LegendList)   
-        
-        
-        
+OmOutList=[]
+EoutList=[]
+CoutList=[]
+for ns in range(0,Nseries):
+    OmVec=OmArray[ns]
+    Evec=Earray[ns]
+    CmeanVec=CmeanArray[ns]
+    nout = 0
+    
+    
+    OmOut=zeros(len(OmArray[ns]))
+    
+    Elist=[]
+    Clist=[]
+    for nr in range(0,len(OmVec)):
+        om=OmVec[nr]
+        E=Evec[nr]
+        C=CmeanVec[nr]
+        if nout==0 or prod(abs(om-OmOut)>dOm)==1:
+            OmOut[nout]=om
+            Elist.append([E])
+            Clist.append([C]) 
+            nout+=1
+        else:
+            z = argmin(abs(om-OmOut))
+            Elist[z].append(E)
+            Clist[z].append(C)
+    
+    OmOut=OmOut[:nout]
+    Elist=array(Elist)
+    Clist=array(Clist)
+    
+    AS=argsort(OmOut)
+    OmOut=OmOut[AS]
+    Elist=Elist[AS]
+    Clist=Clist[AS]
+    
+    EoutList.append(Elist)
+    CoutList.append(Clist)
+    OmOutList.append(OmOut)        
+
+Omega2=OmOutList
+Emean=[[mean(x) for x in y] for y in EoutList]
+Cmean=[[mean(x) for x in y] for y in CoutList]
+
 figure(1)
 clf()
 title("Edge absorption")
 for ns in range(0,Nseries):
-    plot(OmArray[ns],Earray[ns],'o')
-    xlabel("Omega2")
-#    ylim((-2,2))
+    
+    AS=argsort(OmArray[ns])
+    plot(Omega2[ns]/omega1,Emean[ns],'.')
+    xlabel("$\omega_2/\omega_1$")
+#    ylim((-4,2.2))
+    xlim((0,5))
+    
 legend(LegendList)
 
 figure(2)
 clf()
 title("Mean correlation length, normalized")
 for ns in range(0,Nseries):
-    plot(OmArray[ns],CmeanArray[ns],'o')
-    xlabel("Omega2")
-#    ylim((-2,2))
-    ylim((0,0.5))
+    AS=argsort(OmArray[ns])
+    plot(Omega2[ns]/omega1,Cmean[ns],'.')
+    xlabel("$\omega_2/\omega_1$")
+    xlim((0,5))
+    ylim((0,1))
 legend(LegendList)
 
             #DataPath=D.CleanDataDir+"%d_%d_%d.npz"%(L,Nperiods,PBC)*
 
 
-
+show()
 
 #Earray=[[[] for i in range(0,NW)] for i in range(0,NOm)]
 #CmaxArray=[[[] for i in range(0,NW)] for i in range(0,NOm)]

@@ -180,7 +180,7 @@ def OmegaSweep(L,Nperiods,PBC,W,Omega2Range):
 def SeriesDivider(RunList,NprocessMax,MaxSeriesLength=10^4):
     """ Divide runlist into series for paralellization"""
     Nruns = len(RunList)
-    SeriesSize = min(MaxSeriesLength,int(Nruns/NprocessMax/2)+1) # Distribute runs evenly    
+    SeriesSize = min(MaxSeriesLength,int(Nruns/NprocessMax)+1) # Distribute runs evenly    
     NSeries = int(Nruns /SeriesSize)+1
     
     OutList=[]

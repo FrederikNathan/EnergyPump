@@ -33,14 +33,14 @@ from matplotlib.pyplot import *
 
 #DataDir = "../Data/"
 
-L=200
-Nperiods = 20000
+L=400
+Nperiods = 10000
 PBC = 0
 
-Wmax=5*2*pi
-OmMax=6*2*pi
-dW=0.3
-dOm=0.3*1.61823
+Wmax=3.2*2*pi
+OmMax=8*2*pi
+dW=0.1
+dOm=0.1*1.61823
 
 
 omega1=2*pi
@@ -102,7 +102,7 @@ def FindMean(Array):
 
 
 [Ogrid,Wgrid]=meshgrid(Wrange/omega1,OmRange/omega1)
-vminlist=[-1.,0,0,-5,-5]
+vminlist=[-4.,0,0,-5,-5]
 vmaxlist=[2.05,1.2,2,2]
 
 nfig=1

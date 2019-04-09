@@ -90,19 +90,19 @@ For filling sweep, use
 RunList=D.FillingSweep(L,Nperiods,PBC,Wrange,OmegaRange,NsamplesMin)
 SeriesList = D.SeriesDivider(Runlist,Nseries)
 """
-Wrange = 2*pi*array([0.3,0.8,1.2,2.3])
+Wrange = array([0.5*2*pi])
 
 dOmega=0.1*1.61823
-OmegaRange=2*pi*arange(0,7,dOmega)
+OmegaRange=2*pi*arange(0.8,4,dOmega)
 
-Lrange=[20,50,100,200,400,800]
-NperiodsRange = [10,100,1000,10000,50000]
+Lrange=[7,8,9]#[25,50,100,200,400,800]
+NperiodsRange =[10,20,30]# [10,50,100,500,1000,5000,10000,50000]
 
 PBC=0
-Ncopies = 5
-
+Ncopies = 1
+NprocessMax=10
 # For sequence of omega-sweeps
-SeriesList=[]
+RunList=[]
 for Nperiods in NperiodsRange:
     
     for L in Lrange:
@@ -110,17 +110,58 @@ for Nperiods in NperiodsRange:
         for W in Wrange:
             
             for nc in range(0,Ncopies):
-                Series=D.OmegaSweep(L,Nperiods,PBC,W,OmegaRange)
-                SeriesList.append(Series)
-                
-Nruns = sum([len(x) for x in SeriesList])
+                RunList=RunList+D.OmegaSweep(L,Nperiods,PBC,W,OmegaRange)
 
+RunList=[RunList[n] for n in permutation(arange(0,len(RunList)))]
+SeriesList=D.SeriesDivider(RunList,NprocessMax)
+Nruns = sum([len(x) for x in SeriesList])
+##
+##
+#omega1=2*pi
+#
+#Wrange=arange(1.5*2*pi,2.2*2*pi,0.1)
+#
+#dOmega=0.1*1.61823
+#OmegaRange=arange(0.0*omega1+dOmega,omega1*2.5,dOmega)
+#
+###LNPlist[10000,20000,40000,80000]
+##Lrange=[400]
+##NperiodsRange = [10000]
+##
+##PBC=0
+##Ncopies = 2
+##
+### For sequence of omega-sweeps
+##SeriesList=[]
+##for Nperiods in NperiodsRange:
+##    
+##    for L in Lrange:
+##        
+##        for W in Wrange:
+##            for nc in range(0,Ncopies):
+##                Series=D.OmegaSweep(L,Nperiods,PBC,W,OmegaRange)
+##                SeriesList.append(Series)
+##                
+##Nruns = sum([len(x) for x in SeriesList])
+##
+#NSamplesMin=1
+#Nseries=50
+#Nperiods = 10000
+#L=400
+#PBC=0
+#
+#
+#Wrange=arange(1.5*2*pi,2.2*2*pi,0.1)
+#
+#dOmega=0.1*1.61823
+#OmegaRange=arange(0.0*omega1+dOmega,omega1*2.5,dOmega)
+#
 ## For filling sweep
 #RunList=D.FillingSweep(L,Nperiods,PBC,Wrange,OmegaRange,NSamplesMin)
 #SeriesList = D.SeriesDivider(RunList,Nseries)
 #Nruns = len(RunList)
-
-print(f"Number of runs : {Nruns}")
+print("")
+print(f"Number of runs   : {Nruns}   ({len(SeriesList)} series)")
 print("")
 
 # =============================================================================
@@ -128,7 +169,7 @@ print("")
 # =============================================================================
 
         
-savez(f"Sweeplists/{SweepListName}",SeriesList=SeriesList)
+savez(f"SweepLists/{SweepListName}",SeriesList=SeriesList)
     
     
 

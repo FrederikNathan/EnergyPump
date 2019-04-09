@@ -37,8 +37,7 @@ import PumpFunctions as PF
 from multiprocessing import Process as Process 
 
 if len(sys.argv)==1:
-    sys.argv[1:]=["1",]   # Default for NprocessMax = 1
-    print("Hej")
+    sys.argv[1:]=["3",]   # Default for NprocessMax = 1
     
 NprocessMax=int(sys.argv[1])
 
@@ -58,7 +57,7 @@ NSeries = len(SeriesList)
 
 Nprocess = 0
 plist=[]
-
+termlist=[]
 
 
 def CheckActiveProcesses(plist):
@@ -67,15 +66,34 @@ def CheckActiveProcesses(plist):
     for p in plist:
         if p.is_alive():
             Nalive+=1
-    
+        else:
+            # Join dead processes to avoid zombies on server. 
+            if not p in termlist:
+                
+                print("")
+                print(f"========================= Series {plist.index(p)} terminated ========================")                 
+                print("")
 
+                p.join()
+                termlist.append(p)
+                
+    print("")
+    print("----------------------------------------------------------------------")
+    print(f"{Nalive} processes running, {len(plist)-Nalive} terminated")
+    print("")
+    print(f"    Running series     : {list(where([q.is_alive() for q in plist])[0])}")
+    print(f"    Terminated series  : {list(where([not q.is_alive() for q in plist])[0])}")
+    print("")
+    print("----------------------------------------------------------------------")
+    print("")
+    sys.stdout.flush()
     return Nalive 
 
 for ns in range(0,NSeries):
     
 
     Series=SeriesList[ns]
-    time.sleep(0.2)
+    time.sleep(WaitTime)
     
     FileString=f"{int(L+0.1)}_{int(Nperiods+0.1)}_{int(PBC+0.1)}"
     
@@ -83,30 +101,44 @@ for ns in range(0,NSeries):
     while True:
         
         ActiveProcesses=CheckActiveProcesses(plist)
-        print(f"    {ActiveProcesses} processes running, {len(plist)-ActiveProcesses} terminated")
-        print("")
-        if ActiveProcesses<=NprocessMax:
+#        print("")
+#        print("----------------------------------------------------------------------")
+#        print(f"{ActiveProcesses} processes running, {len(plist)-ActiveProcesses} terminated")
+#        print("----------------------------------------------------------------------")
+#        print("")
+        if ActiveProcesses<NprocessMax:
             break
         else:
 
             time.sleep(WaitTime)
         
 
+    print("")
+    print(f"========================= Launching series {ns} =========================")
+    print("")
+#    print("----------------------------------------------------------------------")
 
         
-    p = Process(target = PF.EnergyAbsorptionSweep,args=(Series,FileString))
+    p = Process(target = PF.EnergyAbsorptionSweep,args=(Series,FileString),kwargs={"OP":True,"PreString":f"     Series {ns}, "})
    
     p.start()
 
-    print("Launching 1 process")
-    print("")
     plist.append(p)
 
 
+while True:
+    
+    ActiveProcesses=CheckActiveProcesses(plist)
 
 
+    if ActiveProcesses==0:
+        break
+    else:
 
+        time.sleep(WaitTime)
 
+print("")
+print("Done.")
 
 
 

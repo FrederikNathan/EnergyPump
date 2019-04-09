@@ -89,7 +89,7 @@ for nparm in range(0,Nparms):
             
             Data=load(Path)
         except OSError:
-            print(f"Bad file: {Path}. Delete?")
+            print(f"Bad file: {Path}. Delete? (y/n)")
             x = input()
             
             if x == "y":
@@ -123,7 +123,10 @@ for nparm in range(0,Nparms):
             
             Om2list=Om2list+omega2List
             Wlist=Wlist+W
- 
+        
+        os.system(f"mv {Path} ../Data/Processed/{Path[8:]})
+        
+        
     
     
         
@@ -132,7 +135,7 @@ for nparm in range(0,Nparms):
         
         OutFileName="%d_%d_%d.npz"%(L,Nperiods,PBC)
     except TypeError:
-        OutFileName="%s_%s_%s.npz"%(L,Nperiods,PBC)
+        OutFileName="%s_%s_%s.npz"%(int(float(L)+0.1),int(float(Nperiods)+0.1),int(float(PBC)+0.1))
     
     OutFilePath = "../DataClean/"+OutFileName
     

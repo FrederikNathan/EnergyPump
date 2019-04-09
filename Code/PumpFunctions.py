@@ -29,13 +29,14 @@ import LatticeModel as LM
 import BasicFunctions as BF 
 
 
+
 # Core module, where the simulation is done:
 
 # FindEnergyAbsorption is the core function. Constructs the model and simulates the model over Nperiods periods. Extracts energy absorption and correlation length.
 
 # EnergyAbsprotionSweep is the core sweep function. Evaluates FindEnergyFunciton over a list of parameter-sets, and saves all data into a single file
 
-def EnergyAbsorptionSweep(ParameterList,FileString):
+def EnergyAbsorptionSweep(ParameterList,FileString,OP=False,PreString=""):
     # Core sweep function. 
         
     # Input: ParameterList: List of parameter sets to be run over. Each element in ParameterList (parameter set) a list of the format [L,Nperiods,PBC,omega2,W].
@@ -50,10 +51,11 @@ def EnergyAbsorptionSweep(ParameterList,FileString):
 
     n=0
     t0=time.time()
+    
     for Parameters in ParameterList:
 
         
-        [E,B,C,DisorderVec]=FindEnergyAbsorption(Parameters,OutputProgress=False)
+        [E,B,C,DisorderVec]=FindEnergyAbsorption(Parameters,OutputProgress=OP,PreString=PreString+f"Run {n}/{len(ParameterList)} (L={Parameters[0]}, Np={Parameters[1]}):   ")
         
 
         Cmean=mean(C)
@@ -76,7 +78,7 @@ def EnergyAbsorptionSweep(ParameterList,FileString):
         
 
 
-def FindEnergyAbsorption(Parameters,OutputProgress=True):
+def FindEnergyAbsorption(Parameters,OutputProgress=True,PreString=""):
     
     
     # [E,B,C,DisorderVec] = FindEnergyAbsorption([L,Nperiods,PBC,omega2,W],OutputProgress=True)
@@ -207,7 +209,8 @@ def FindEnergyAbsorption(Parameters,OutputProgress=True):
     # =============================================================================
     if OutputProgress:
         
-        print("Computing evolution operator")
+        print(PreString+"Computing evolution operator")
+        sys.stdout.flush()
     U = Id.toarray()
     t0=time.time()
     
@@ -267,8 +270,9 @@ def FindEnergyAbsorption(Parameters,OutputProgress=True):
                 P=P+dP 
                            
     
-        if nT%(max(1,int(Nperiods/20)))==0 and OutputProgress:
-            print(f"   at period {nT}/{Nperiods}. Time spent: {time.time()-t0:.2g} s ")
+        if nT%(max(1,int(Nperiods/5)))==0 and OutputProgress:
+            print(PreString+f"   at period {nT}/{Nperiods}. Time spent: {time.time()-t0:.2g} s ")
+            sys.stdout.flush()
             
     P=P/Nperiods 
     
