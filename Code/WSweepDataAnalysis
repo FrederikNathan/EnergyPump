@@ -1,0 +1,170 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Wed Jan 16 11:16:53 2019
+
+@author: frederik
+"""
+
+
+import sys
+import os 
+import os.path as op
+
+from scipy import *
+from scipy.linalg import *
+from numpy import ufunc as ufunc
+import scipy.sparse as sp
+import scipy.sparse.linalg as spla
+from numpy.random import *
+from scipy.misc import factorial as factorial
+
+import datetime
+import logging as l
+import time
+
+import TightBindingModel as TBM 
+
+import LatticeModel as LM
+
+import BasicFunctions as BF 
+import DataAnalysisFunctions as D
+from matplotlib.pyplot import *
+
+#DataDir = "../Data/"
+
+omega1=2*pi
+
+
+Omega2 = 1.61803398875*omega1
+#Omega2 = 1.66965716*omega1
+# =============================================================================
+# Find data that match criterion
+# =============================================================================
+def Criterion(L,Nperiods,pbc,Wlist,OmList):
+    
+
+
+    SizeCriterion=Nperiods==10000 and L==400 and pbc ==0
+    
+    ParmCriterion = abs(OmList-Omega2)<1e-2*2*pi
+    
+    if not SizeCriterion:
+        return array([])
+    else:
+        return where(ParmCriterion)[0]
+        
+
+
+[Earray,CmeanArray,OmArray,Warray,SizeList]=D.FindData(Criterion)
+
+# Number of series
+Nseries=len(Earray)
+
+# Regroup data
+[[Emean,Estd],[Cmean,Cstd],Nlist,Omega2list,Wlist]=D.GroupData(Earray,CmeanArray,OmArray,Warray,sorting="W")
+
+LegendList=[f"L={L}, Np = {Nperiods}" for [L,Nperiods,PBC] in SizeList]
+# Construct legend for plots 
+
+
+# =============================================================================
+# Plot
+# =============================================================================
+figure(1)
+clf()
+title(f"Edge absorption, $\omega2$ ={Omega2/omega1:.6}$\omega_1$")
+for ns in range(0,Nseries):
+
+    plot(Wlist[ns]/omega1,Emean[ns],'.-')
+    xlabel("$W/\omega_1$")
+    xlim((0,5))
+    
+legend(LegendList)
+
+figure(2)
+clf()
+title(f"Mean correlation length, normalized, $\omega2$={Omega2/omega1:.6}$\omega_1$")
+for ns in range(0,Nseries):
+    AS=argsort(OmArray[ns])
+    plot(Wlist[ns]/omega1,Cmean[ns],'.-')
+    xlabel("$W/\omega_1$")
+    xlim((0,5))
+    ylim((0,1))
+legend(LegendList)
+    
+                #DataPath=D.CleanDataDir+"%d_%d_%d.npz"%(L,Nperiods,PBC)*
+    
+    
+show()
+
+#Earray=[[[] for i in range(0,NW)] for i in range(0,NOm)]
+#CmaxArray=[[[] for i in range(0,NW)] for i in range(0,NOm)]
+#CmeanArray=[[[] for i in range(0,NW)] for i in range(0,NOm)]
+#Barray=[[[] for i in range(0,NW)] for i in range(0,NOm)]
+
+#if not os.path.isfile(DataPath):
+#    raise SystemExit("No data have been generated")
+#
+#Data = load(DataPath)
+#Elist=Data["Elist"]
+#Blist=Data["Blist"]
+#CmeanList=Data["Cmeanlist"]
+#CmaxList=Data["Cmaxlist"]
+#Om2List=Data["Om2list"]
+#WList=Data["Wlist"]
+#
+#npoints = len(Elist)
+#
+#
+#for n in range(0,npoints):
+#    
+#    [E,B,Cmean,Cmax,omega2,W]=[X[n] for X in [Elist,Blist,CmeanList,CmaxList,Om2List,WList]]       
+#    Cmean=Cmean/(L/3)          
+#    Cmax=Cmax/(L/3)
+#    
+#    nOm=D.FindIndex(omega2,OmRange)
+#    nW=D.FindIndex(W,Wrange)
+#
+#
+#    if nOm!=None and nW!=None:
+#        Earray[nOm][nW].append(E)
+#        Barray[nOm][nW].append(log10(B))
+#        CmeanArray[nOm][nW].append(Cmean)
+#        CmaxArray[nOm][nW].append(Cmax)      
+#
+#            
+#
+#
+#        
+#
+#def FindMean(Array):
+#    Out=array([[nan_to_num(mean(x)+5)-5 for x in y] for y in Array])   
+#    Count=array([[len(x) for x in y] for y in Array])
+#
+#    return [Out,Count]         
+#
+#
+#[Ogrid,Wgrid]=meshgrid(Wrange/omega1,OmRange/omega1)
+#vminlist=[-5,0,0,-5,-5]
+#
+#nfig=1
+#
+#TitleStr="L=%d, Nperiods = %d"%(L,Nperiods)
+#TitleList=[f"Edge energy absorption [$\omega_1\omega_2/2\pi$], {TitleStr}",f"Mean correlation length [$L/3$], {TitleStr}","Max correlation length [$L/3$], {TitleStr}",f"Bulk energy absorption (log10) [$\omega_1\omega_2/2\pi$], {TitleStr}"]
+#
+#for Array  in [Earray,CmeanArray,CmaxArray, Barray]:
+#    if not ((nfig !=4  and PBC==1) or (nfig==4 and PBC==0)):
+#    
+#        figure(nfig)
+#        clf()
+#        [Mean,Count]=FindMean(Array)
+#        pcolormesh(Ogrid,Wgrid,Mean,cmap="gnuplot",vmin=vminlist[nfig-1])
+#        colorbar()
+#        ylabel("$\omega_2$  $ [\omega_1]$")
+#        xlabel("Disorder strength  $[\omega_1]$")
+#        title(TitleList[nfig-1])
+#    
+#    nfig+=1
+#        
+#            

@@ -198,4 +198,177 @@ def SeriesDivider(RunList,NprocessMax,MaxSeriesLength=10^4):
         OutList.append(Series)
     
     return OutList
+
+# =============================================================================
+# Data extractors
+# =============================================================================
+def FindData(Criterion):
+    """ Find data that match the crieterion. 
+    
+    Criterion: callable, of the form f(Nperiods,L,pbc,Wlist,OmList). 
+    Should return Indices (array of ints), of entries in Wlist,Omlist, where criterion is met. 
+    Should return empty array (array([])) if no data points match the criterion. 
+    
+    returns
+    
+    [Earray,CmeanArray,OmArray,Warray,LegendList]
+    
+    Earray: ordered array with energy abpsorptions of the data that match the criterion, divided after the values of L,Nperiods and PBC
+    Cmeanarray: mean correlation length
+    OmArray: frequencies of mode 2
+    Warray: disorder strengths
+    SizeList: size of systems. Earray[n] is a list of data taken with [L,Nperiods,PBC]=SizeList[n]
+    
+    The data are sorted such that 
+    Earray[n][z], CmeanArray[n][z] are obtained with parameters [L,Nperiods,PBC]=SizeList[n], W=Warray[n][z], Om2=Om2Array[n][z]
+    """
+    FileList=os.listdir(CleanDataDir)
+    Earray=[]
+    OmArray=[]
+    Warray=[]
+    CmeanArray=[]
+    LegendList=[]
+    
+    SizeList=[]
+    for File in FileList:
+        if IsNPZ(File):
+            Data = load(CleanDataDir+File)
+            Elist=Data["Elist"]
+            Blist=Data["Blist"]
+            CmeanList=Data["Cmeanlist"]
+            CmaxList=Data["Cmaxlist"]
+            Om2List=Data["Om2list"]
+            WList=Data["Wlist"]    
+            
+            [L,Nperiods,PBC]=list(Data["Parms"])
+            
+            Indices = Criterion(L,Nperiods,PBC,WList,Om2List)
+                
+            if len(Indices)>0:
+                Earray.append(Elist[Indices])
+                CmeanArray.append(CmeanList[Indices]/L)
+                
+                OmArray.append(Om2List[Indices])
+                Warray.append(WList[Indices])
+                
+
+                SizeList.append([L,Nperiods,PBC])
+                    
+    return [Earray,CmeanArray,OmArray,Warray,SizeList]
+    
+
+    
+def GroupSeries(Evec,CmeanVec,OmVec,Wvec,dW=1e-7,dOm=1e-7,sorting="omega2"):
+    """Group lists after the values of the parameters omega2 and W, such that duplicate parameter sets are avoided
+
+    args (all 1d arrays of the same length):
+        Evec      : list of energy absorptions
+        CmeanVec  : list of mean corr. length
+        Wvec      : list of W's
+        OmVec     : list of omega2's 
         
+        Input should be such that [Evec[n],CmeanVec[n]] are obtained with parameters [Wvec[n],OmVec[n]] 
+        
+    output:
+        [Wout[k],Omout[k]]: list of the Z distinct parameter sets used for the data (parameter sets are identical, if they are within [dOm,dW] from each other)
+        Emean[k], Cmean[k]: mean value of E and C for the parameter set Wout[k],OmOut[k]
+        Estd[k],Cstd[k] : Standard deviation of E and C  for the parameter set Wout[k],OmOut[k]
+        
+        Nlist : Number of data points with parameters Wout,OmOut
+    """
+    
+
+    OmOut=[]
+    WOut=[]
+    Elist=[]
+    Clist=[]
+
+    
+    for nr in range(0,len(OmVec)):
+        Om=OmVec[nr]
+        E=Evec[nr]
+        C=CmeanVec[nr]
+        W=Wvec[nr]
+        
+        OmMatch = abs(Om-OmOut)<dOm
+        WMatch = abs(W-WOut)<dW
+        
+        Match=OmMatch*WMatch
+        
+        if sum(Match)==0:
+            
+            OmOut.append(Om)
+            WOut.append(W)
+            
+            Elist.append([E])
+            Clist.append([C]) 
+            
+
+        else:
+            z=where(Match)[0][0]
+            
+            Elist[z].append(E)
+            Clist[z].append(C)
+    
+
+    Elist=array(Elist)
+    Clist=array(Clist)
+    OmOut=array(OmOut)
+    WOut=array(WOut)
+    
+    if sorting=="omega2":
+        
+        AS=argsort(OmOut)
+    elif sorting=="W":
+        AS=argsort(WOut)
+    else:
+        raise ValueError("sorting must be either 'omega2' or 'W'")
+        
+    OmOut=OmOut[AS]
+    Elist=Elist[AS]
+    Clist=Clist[AS]
+    WOut=WOut[AS]
+    
+    Emean=array([mean(x) for x in Elist])
+    Estd=array([std(x) for x in Elist])
+    
+    Cmean=array([mean(x) for x in Clist])
+    Cstd=array([std(x) for x in Clist])    
+    
+    Nlist=array([len(x) for x in Elist])
+    
+    return [[Emean,Estd],[Cmean,Cstd],Nlist,OmOut,WOut]
+
+def GroupData(Earray,CArray,OmArray,Warray,sorting = "omega2"):
+    """ 
+    Group a list of data sets in the same way as GroupSeries
+    Output[n]=GroupSeries(Input[n])
+    """
+    Nseries=len(Earray)
+    
+    EmeanArray=[]
+    EstdArray=[]
+    CmeanArray=[]
+    CstdArray=[]
+    NArray=[]
+    Om2Array=[]
+    WArray=[]
+    
+    
+    for ns in range(0,Nseries):
+        OmVec=OmArray[ns]
+        Evec=Earray[ns]
+        CmeanVec=CArray[ns]
+        Wvec=Warray[ns]
+    
+        [[Emean,Estd],[Cmean,Cstd],Nlist,Omega2,Wout]=GroupSeries(Evec,CmeanVec,OmVec,Wvec,sorting=sorting)
+
+        EmeanArray.append(Emean)
+        EstdArray.append(Estd)
+        CmeanArray.append(Cmean)
+        CstdArray.append(Cstd)
+    
+        Om2Array.append(Omega2)
+        WArray.append(Wout)
+        NArray.append(Nlist)
+    return [[EmeanArray,EstdArray],[CmeanArray,CstdArray],NArray,Om2Array,WArray]
